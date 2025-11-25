@@ -1,1 +1,1 @@
-I tested all permissions with different emails. I saw that the delete and create("+") buttons didn`t appear in users which I didn't give permission to do so. Bu for now I couldn'y test field permissions
+

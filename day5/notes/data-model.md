@@ -15,13 +15,14 @@ Purpose: Stores all projects in the system.
 | Field       | Type      | Constraints        | Description                   |
 | ----------- | --------- | ------------------ | ----------------------------- |
 | id          | integer   | PK, auto-increment | Unique project ID             |
-| name        | varchar   | NOT NULL           | Project name                  |
+| name        | string    | NOT NULL           | Project name                  |
 | description | text      | NULL allowed       | Optional project description  |
-| start_date  | datetime  | NULL allowed       | Project start date (optional) |
-| end_date    | datetime  | NULL allowed       | Project end date (optional)   |
+| start_date  | date      | NULL allowed       | Project start date (optional) |
+| end_date    | date      | NULL allowed       | Project end date (optional)   |
 | status_id   | integer   | NOT NULL, FK       | Project status                |
-| created_at  | timestamp | NOT NULL           | Creation timestamp            |
 | created_by  | integer   | NOT NULL, FK       | User who created the project  |
+| created_at  | datetime  | NULL allowed       | Creation date and time        |
+| updated_at  | datetime  | NULL allowed       | Updated date and time         |
 
 ---
 
@@ -29,16 +30,21 @@ Purpose: Stores all projects in the system.
 
 Purpose: Stores all tasks linked to projects.
 
-| Field       | Type     | Constraints        | Description           |
-| ----------- | -------- | ------------------ | --------------------- |
-| id          | integer  | PK, auto-increment | Unique task ID        |
-| project_id  | integer  | NOT NULL, FK       | Related project       |
-| title       | varchar  | NOT NULL           | Task title            |
-| description | text     | NULL allowed       | Task description      |
-| priority_id | integer  | NOT NULL, FK       | Linked priority value |
-| status_id   | integer  | NOT NULL, FK       | Linked status value   |
-| due_date    | datetime | NULL allowed       | Optional due date     |
-| user_id     | integer  | NOT NULL, FK       | Assigned user         |
+| Field               | Type     | Constraints        | Description           |
+| ------------------- | -------- | ------------------ | --------------------- |
+| id                  | integer  | PK, auto-increment | Unique task ID        |
+| title               | string   | NOT NULL           | Task title            |
+| description         | text     | NULL allowed       | Task description      |
+| project_id          | integer  | NOT NULL, FK       | Related project       |
+| assigned_to         | integer  | NULL allowed, FK   | Task assigned user    |
+| created_by          | integer  | NULL allowed, FK   | Task created user     |
+| status_id           | integer  | NULL allowed, FK   | Linked status value   |
+| priority_id         | integer  | NULL allowed, FK   | Linked priority value |
+| due_date            | date     | NULL allowed       | Optional due date     |
+| estimated_hours     | decimal  | NULL allowed       | Estimated hours       |
+| completed_at        | datetime | NULL allowed       | Task completion date  |
+| created_at          | datetime | NULL allowed       | Task creation date    |
+| updated_at          | datetime | NULL allowed       | Task updated date     |
 
 ---
 
@@ -49,11 +55,12 @@ Purpose: Stores all users of the system.
 | Field       | Type    | Constraints      | Description                 |
 | ----------- | ------- | ---------------- | --------------------------- |
 | id          | integer | PK               | Unique user ID              |
-| email       | varchar | UNIQUE, NOT NULL | User email                  |
-| name        | varchar | NOT NULL         | Full name                   |
-| password    | varchar | NOT NULL         | Hashed password             |
-| client_type | varchar | NOT NULL         | Ucode-specific field        |
-| role        | varchar | NOT NULL         | User role (Admin, PM, etc.) |
+| name        | string  | NOT NULL         | Full name                   |
+| email       | string  | UNIQUE           | User email                  |
+| login       | string  | NULL allowed     | User login                  |
+| password    | string  | NOT NULL         | Hashed password             |
+| client_type | string  | NULL allowed     | Ucode-specific field        |
+| role        | string  | NULL allowed     | User role (Admin, PM, etc.) |
 
 ---
 
@@ -65,9 +72,10 @@ Purpose: Stores comments made on tasks.
 | ---------- | --------- | ------------------ | -------------------------- |
 | id         | integer   | PK, auto-increment | Comment ID                 |
 | task_id    | integer   | NOT NULL, FK       | Related task               |
+| user_id    | integer   | NOT NULL, FK       | Related user               |
 | comment    | text      | NOT NULL           | Comment body               |
-| created_at | timestamp | NOT NULL           | Time of comment            |
-| created_by | integer   | NOT NULL, FK       | User who wrote the comment |
+| created_at | datetime  | NULL allowed       | Time of comment            |
+| created_by | integer   | NULL allowed       | User who wrote the comment |
 
 ---
 
@@ -75,10 +83,12 @@ Purpose: Stores comments made on tasks.
 
 Purpose: Lookup table for statuses ("Todo", "In Progress", "Done").
 
-| Field  | Type    | Constraints | Description |
-| ------ | ------- | ----------- | ----------- |
-| id     | integer | PK          | Status ID   |
-| status | varchar | NOT NULL    | Status name |
+| Field  | Type    | Constraints  | Description  |
+| ------ | ------- | ------------ | ------------ |
+| id     | integer | PK           | Status ID    |
+| name   | string  | NULL allowed | Status name  |
+| slug   | string  | NULL allowed | Status slug  |
+| color  | string  | NULL allowed | Status color |
 
 ---
 
@@ -86,10 +96,12 @@ Purpose: Lookup table for statuses ("Todo", "In Progress", "Done").
 
 Purpose: Lookup table for priorities ("Low", "Medium", "High").
 
-| Field    | Type    | Constraints | Description   |
-| -------- | ------- | ----------- | ------------- |
-| id       | integer | PK          | Priority ID   |
-| priority | varchar | NOT NULL    | Priority name |
+| Field    | Type    | Constraints  | Description    |
+| -------- | ------- | ------------ | -------------- |
+| id       | integer | PK           | Priority ID    |
+| name     | string  | NULL allowed | Priority name  |
+| slug     | string  | NULL allowed | Priority slug  |
+| priority | integer | NULL allowed | Priority order |
 
 ---
 
@@ -97,52 +109,59 @@ Purpose: Lookup table for priorities ("Low", "Medium", "High").
 
 Purpose: Defines which users are members of a given project.
 
-| Field      | Type    | Constraints  | Description     |
-| ---------- | ------- | ------------ | --------------- |
-| project_id | integer | NOT NULL, FK | Related project |
-| user_id    | integer | NOT NULL, FK | Related user    |
-
+| Field      | Type     | Constraints  | Description     |
+| ---------- | -------- | ------------ | --------------- |
+| id         | integer  | PK           | ID              |
+| project_id | integer  | NOT NULL, FK | Related project |
+| user_id    | integer  | NOT NULL, FK | Related user    |
+| role       | string   | NULL allowed | Member role     |
+| added_at   | datetime | NULL allowed | Added time      |
 *Composite primary key:* (project_id, user_id)
 
 ---
 
 ## 2. Relationships
 
-### **projects → task_status**
 
+## 1. Projects table relations:
+
+### **projects → task_status**
 projects.status_id → task_status.id
 
 ### **projects → users**
-
 projects.created_by → users.id
 
-### **tasks → projects**
+## 2. Tasks table relations:
 
+### **tasks → projects**
 tasks.project_id → projects.id
 
-### **tasks → task_status**
+### **tasks → users**
+tasks.assigned_to → users.id
 
+### **tasks → users**
+tasks.created_by → users.id
+
+### **tasks → task_status**
 tasks.status_id → task_status.id
 
 ### **tasks → task_priority**
-
 tasks.priority_id → task_priority.id
 
-### **tasks → users**
-
-tasks.user_id → users.id
+## 3. Task comments table relations:
 
 ### **task_comments → tasks**
-
 task_comments.task_id → tasks.id
 
 ### **task_comments → users**
+task_comments.user_id → users.id
 
-task_comments.created_by → users.id
+## 4. Project members table relations:
 
-### **project_members → users & projects**
-
+### **project_members → projects**
 project_members.project_id → projects.id
+
+### **project_members → users**
 project_members.user_id → users.id
 
 ---
@@ -153,7 +172,7 @@ project_members.user_id → users.id
 
 * Project start/end dates are optional because some projects begin without finalized schedules.
 * Due dates can be optional depending on workflow.
-* Most foreign keys are NOT NULL to enforce data integrity.
+* Most foreign keys are          to enforce data integrity.
 
 ### **Lookup Tables**
 
@@ -179,7 +198,7 @@ Always non-null for tracking and auditing.
 ## 4. Diagram File
 
 Stored at:
-`diagrams/data-model.png`
+`screenshots/data-model.png`
 
 ---
 
@@ -191,5 +210,3 @@ This schema supports:
 * Multi-user collaboration
 * Role-based access
 * Extensibility for future features
-
-If you need the SQL migration version, ERD diagrams, or improvements—just ask.
